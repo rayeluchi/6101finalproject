@@ -1,0 +1,156 @@
+---
+title: "Data Import and Cleaning"
+author: "Meghan N. Casey"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+```{r init, include=F}
+# The package "ezids" (EZ Intro to Data Science) includes a lot of the helper functions we developed for the course. 
+# Some of the frequently used functions are loadPkg(), xkabledply(), xkablesummary(), uzscale(), etc.
+# Once installed, load the library.
+library(ezids)
+```
+
+***Loading the Dataset***
+
+```{r include=T}
+
+library(readxl)
+student_depression_dataset <- read_excel("~/Desktop/DATS 6101/Git Hub Files/6101datapandas/student_depression_dataset.xlsx", skip = 1, col_names = TRUE)
+```
+
+***Data Preview***
+
+Before cleaning the data, let's explore the import to get a sense of what we are starting with. 
+
+```{r}
+head(student_depression_dataset, n=5)
+tail(student_depression_dataset, n=3)
+```  
+```{r}
+
+str(student_depression_dataset)
+summary(student_depression_dataset)
+
+```
+
+
+The dataset includes 27902 observations with 18 features. 
+
+ID
+Gender
+Age
+City
+Profession
+Academic Pressure
+Work Pressure
+CGPA
+Study Satisfaction
+Job Satisfaction
+Sleep Duration
+Dietary Habits
+Degree
+Suicidal Thoughts
+Work/Study Hours
+Financial Stress
+Family History of Mental Illness
+Depression
+
+***Data Cleaning***
+
+To make our analysis easier, we can remove some of the unnecessary columns.
+
+```{r}
+student_depression_dataset$id <- NULL
+student_depression_dataset$Profession <- NULL 
+```
+
+Check for duplicates and missing values
+
+```{r}
+
+duplicates_count <- sum(duplicated(student_depression_dataset))
+duplicates_count
+
+student_depression_dataset <- student_depression_dataset[!duplicated(student_depression_dataset), ]
+
+cat("Number of duplicates removed:", duplicates_count, "\n")
+cat("Rows remaining after removing duplicates:", nrow(student_depression_dataset), "\n")
+str(student_depression_dataset)
+
+missing_values <- colSums(is.na(student_depression_dataset))
+missing_values
+```
+
+We also need to convert some variables into the proper type.
+
+```{r}
+
+student_depression_dataset$`Academic Pressure`<- factor(
+  student_depression_dataset$`Academic Pressure`,
+  levels = c(1, 2, 3, 4, 5),
+  labels = c("Very Low", "Low", "Moderate", "High", "Very High"),
+  ordered = TRUE
+)
+
+student_depression_dataset$`Work Pressure`<- factor(
+  student_depression_dataset$`Work Pressure`,
+  levels = c(0, 1, 2, 3, 4, 5),
+  labels = c("N/A", "Very Low", "Low", "Moderate", "High", "Very High"),
+  ordered = TRUE
+)
+
+student_depression_dataset$`Study Satisfaction`<- factor(
+  student_depression_dataset$`Study Satisfaction`,
+  levels = 1:4,
+  labels = c("Poor", "Fair", "Good", "Excellent"),
+  ordered = TRUE
+)
+
+student_depression_dataset$`Job Satisfaction`<- factor(
+  student_depression_dataset$`Job Satisfaction`,
+  levels = 0:4,
+  labels = c( "N/A", "Poor", "Fair", "Good", "Excellent"),
+  ordered = TRUE
+)
+
+student_depression_dataset$`Sleep Duration` <- factor(
+  student_depression_dataset$`Sleep Duration`,
+  levels = c("'Less than 5 hours'", "'5-6 hours'", "'7-8 hours'", "'More than 8 hours'"),
+  ordered = TRUE
+)
+
+student_depression_dataset$`Dietary Habits` <- factor(
+  student_depression_dataset$`Dietary Habits`,
+  levels = 1:3,
+  labels = c("Unhealthy", "Moderate", "Healthy"),
+  ordered = TRUE
+)
+
+student_depression_dataset$`Financial Stress`<- factor(
+  student_depression_dataset$`Financial Stress`,
+  levels = c(1, 2, 3, 4, 5),
+  labels = c("Very Low", "Low", "Moderate", "High", "Very High"),
+  ordered = TRUE
+)
+
+student_depression_dataset$Depression <- factor(
+  student_depression_dataset$Depression,
+  levels = c(0, 1),
+  labels = c("No", "Yes")
+)
+```
+
+Now we're ready for EDA and hypothesis testing. 
