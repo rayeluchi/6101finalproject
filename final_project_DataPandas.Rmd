@@ -1,0 +1,572 @@
+---
+title: "STUDENT DEPRESSION DATASET ANALYSIS"
+author: "Data Pandas"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true                
+    toc_depth: 3             
+    toc_float: true          
+    number_sections: true   
+    code_folding: show       
+    theme: flatly           
+    highlight: tango        
+    df_print: paged          
+editor_options:
+  chunk_output_type: inline  
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r init, include=F}
+library(ezids)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(gridExtra)
+library(stringr)  
+library(corrplot)
+library(randomForest)
+library(rpart)
+library(caret)
+library(class)
+```
+
+# **Introduction**
+
+Mental health has emerged as one of the most pressing challenges among student populations globally. Academic pressure, financial instability, sleep deprivation, and social isolation are just a few of the many factors contributing to rising levels of depression among students. Identifying and understanding these risk factors is critical — not just for academic success, but for ensuring student well-being and safety.
+
+This project focuses on predicting student depression using a comprehensive dataset encompassing psychological, academic, lifestyle, and demographic variables. Leveraging statistical analysis and machine learning techniques, we aim to answer two key questions:
+
+1) Can we accurately predict whether a student is at risk of depression?
+2) Which factors contribute most significantly to that risk?
+
+# **Dataset**
+
+The dataset used in this project was sourced from Kaggle and includes responses from 27,901 students across various regions. It captures a wide range of features related to academics, lifestyle, demographics, and mental health.
+
+Key variables include:
+
+Academic Pressure, Study Hours, CGPA
+Sleep Hours, Diet Score, Financial Stress
+Suicidal Thoughts, Family History of Mental Illness
+Age, Gender, and Study Satisfaction
+
+The target variable is Depression (1 = depressed, 0 = not depressed).
+
+## *Loading the Dataset*
+
+Whooo, Let's start by loading the dataset.
+
+```{r include=T}
+student_depression_dataset <- read.csv("student_depression_dataset.csv")
+```
+
+## *Data Preview*
+
+Before cleaning the data, let's explore the import to get a sense of what we are starting with. 
+
+```{r}
+head(student_depression_dataset, n=5)
+tail(student_depression_dataset, n=3)
+``` 
+
+We will also see the structure and summary of the dataset.
+```{r}
+
+str(student_depression_dataset)
+summary(student_depression_dataset)
+
+```
+
+
+The dataset includes 27902 observations with 18 features. 
+
+ID
+Gender
+Age
+City
+Profession
+Academic Pressure
+Work Pressure
+CGPA
+Study Satisfaction
+Job Satisfaction
+Sleep Duration
+Dietary Habits
+Degree
+Suicidal Thoughts
+Work/Study Hours
+Financial Stress
+Family History of Mental Illness
+Depression
+
+***Data Cleaning***
+
+To make our analysis easier, we can remove some of the unnecessary columns like Id, Profession, City. We will also remove the Work presuure and Job satisfaction since our main goal is to Identify the students who are at risk 
+
+```{r}
+student_depression_dataset$id <- NULL
+student_depression_dataset$Profession <- NULL
+student_depression_dataset$City <- NULL
+student_depression_dataset$Work.Pressure <- NULL
+student_depression_dataset$Job.Satisfaction <- NULL
+student_depression_dataset$Study.Hours <- student_depression_dataset$Work.Study.Hours
+student_depression_dataset$Work.Study.Hours<- NULL
+```
+
+Check for duplicates and missing values
+
+```{r}
+
+duplicates_count <- sum(duplicated(student_depression_dataset))
+duplicates_count
+
+student_depression_dataset <- student_depression_dataset[!duplicated(student_depression_dataset), ]
+
+cat("Number of duplicates removed:", duplicates_count, "\n")
+cat("Rows remaining after removing duplicates:", nrow(student_depression_dataset), "\n")
+str(student_depression_dataset)
+
+missing_values <- colSums(is.na(student_depression_dataset))
+missing_values
+```
+
+We also need to convert some variables into the proper type.
+
+Let's see the unique values in every column so that we can change their type accordingly
+
+```{r}
+for (col in names(student_depression_dataset)) {
+  cat("\n\nColumn:", col, "\n")
+  print(unique(student_depression_dataset[[col]]))
+}
+```
+
+First' We will convert the Degree to years of education and make the Sleep Duration a numerical variable.
+
+```{r}
+student_depression_dataset$Degree <- gsub("[‘’'“”\"]", "", student_depression_dataset$Degree)
+student_depression_dataset$Sleep.Duration <- gsub("[‘’'“”\"]", "", student_depression_dataset$Sleep.Duration)
+
+student_depression_dataset$Education.Years <- recode(student_depression_dataset$Degree,
+  "Class 12" = 12,
+  "BA" = 16, "BSc" = 16, "B.Com" = 16, "BBA" = 16, "BCA" = 16, "B.Ed" = 16,
+  "B.Tech" = 16, "BE" = 16, "BHM" = 16, "B.Arch" = 16, "B.Pharm" = 16, "MBBS" = 16, "LLB" = 16,
+  "MA" = 18, "MSc" = 18, "M.Com" = 18, "M.Ed" = 18, "M.Tech" = 18, "MBA" = 18,
+  "MCA" = 18, "ME" = 18, "M.Pharm" = 18, "MHM" = 18, "LLM" = 18, "MD" = 18,
+  "PhD" = 21,
+  "Others" = 16,
+  .default = 16
+
+)
+
+student_depression_dataset$Sleep.Hours <- recode(student_depression_dataset$Sleep.Duration,
+  "Less than 5 hours" = 4,
+  "5-6 hours" = 5.5,
+  "7-8 hours" = 7.5,
+  "More than 8 hours" = 9,
+  "Others" = 6.5,
+  .default = 6.5
+)
+
+student_depression_dataset$Degree <- NULL
+student_depression_dataset$Sleep.Duration <- NULL
+
+
+```
+
+Now, there are some ordinal variables like dietary habits into numerical with increasing levels.
+
+```{r}
+student_depression_dataset$Academic.Pressure[
+  student_depression_dataset$Academic.Pressure == "0"
+] <- "3"
+student_depression_dataset$Financial.Stress[
+  student_depression_dataset$Financial.Stress == "?"
+] <- "3.0"
+
+student_depression_dataset$Diet.Score <- recode(student_depression_dataset$Dietary.Habits,
+  "Unhealthy" = 1,
+  "Moderate" = 2,
+  "Healthy" = 3,
+  .default = 2
+)
+
+student_depression_dataset$Dietary.Habits <- NULL
+str(student_depression_dataset)
+```
+
+
+Now let us convert the required variables into integer for simplification.
+```{r}
+
+student_depression_dataset$Academic.Pressure <- as.integer(
+  student_depression_dataset$Academic.Pressure
+)
+
+student_depression_dataset$Financial.Stress <- as.integer(
+  student_depression_dataset$Financial.Stress
+)
+student_depression_dataset$Gender <- as.factor(student_depression_dataset$Gender)
+student_depression_dataset$Depression <- as.factor(student_depression_dataset$Depression)
+student_depression_dataset$Academic.Pressure <- as.integer(student_depression_dataset$Academic.Pressure)
+
+ezids::xkablesummary(student_depression_dataset)
+```
+
+***EDA***
+
+Distribution by Depression variable
+
+```{r}
+
+ggplot(student_depression_dataset, aes(x = Depression)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Distribution of Depression Cases", x = "Depression", y = "Count") +
+  theme_minimal()
+
+```
+
+Depression Distribution by Gender
+
+```{r}
+ggplot(student_depression_dataset, aes(x = Gender, fill = Depression)) +
+  geom_bar(position = "fill") +
+  labs(title = "Depression Proportion by Gender", y = "Proportion") +
+  theme_minimal()
+
+```
+
+Distribution of Numerical Features
+
+```{r}
+num_vars <- c("Age", "CGPA", "Sleep.Hours", "Study.Hours", "Academic.Pressure", 
+              "Financial.Stress", "Diet.Score", "Education.Years")
+
+student_depression_dataset %>%
+  select(all_of(num_vars)) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Value") %>%
+  ggplot(aes(x = Value)) +
+  geom_histogram(bins = 30, fill = "skyblue", color = "black") +
+  facet_wrap(~ Variable, scales = "free", ncol = 3) +
+  labs(title = "Histograms of Numerical Features") +
+  theme_minimal()
+
+```
+
+Depression Rate by Sleep Group (Barplot)
+
+```{r}
+student_depression_dataset %>%
+  group_by(Sleep.Hours, Depression) %>%
+  summarise(count = n()) %>%
+  mutate(prop = count / sum(count)) %>%
+  ggplot(aes(x = factor(Sleep.Hours), y = prop, fill = Depression)) +
+  geom_bar(stat = "identity", position = "fill") +
+  labs(title = "Depression Rate by Sleep Hours", y = "Proportion") +
+  theme_minimal()
+
+```
+
+Boxplots of Numerical Features vs Depression
+
+```{r}
+# Boxplot function for multiple features
+vars <- c("CGPA", "Sleep.Hours", "Study.Hours", "Age")
+
+for (v in vars) {
+  print(
+    ggplot(student_depression_dataset, aes_string(x = "Depression", y = v, fill = "Depression")) +
+      geom_boxplot() +
+      labs(title = paste("Boxplot of", v, "by Depression")) +
+      theme_minimal()
+  )
+}
+```
+
+Stacked Bar Plots: Categorical Scores vs Depression
+
+```{r}
+# Academic Pressure vs Depression
+ggplot(student_depression_dataset, aes(x = factor(Academic.Pressure), fill = Depression)) +
+  geom_bar(position = "fill") +
+  labs(title = "Academic Pressure vs Depression", x = "Academic Pressure Score", y = "Proportion") +
+  theme_minimal()
+
+# Financial Stress vs Depression
+ggplot(student_depression_dataset, aes(x = factor(Financial.Stress), fill = Depression)) +
+  geom_bar(position = "fill") +
+  labs(title = "Financial Stress vs Depression", x = "Financial Stress Score", y = "Proportion") +
+  theme_minimal()
+
+```
+
+
+Correlation Heatmap
+
+```{r}
+# Select numeric columns and compute correlation
+num_data <- student_depression_dataset %>%
+  dplyr::select(where(is.numeric)) %>%
+  na.omit()
+
+cor_matrix <- cor(num_data)
+
+# Base corrplot
+corrplot(cor_matrix, method = "color", type = "lower", 
+         tl.col = "black", tl.srt = 45, 
+         addCoef.col = "black", number.cex = 0.7,
+         title = "Correlation Heatmap", mar = c(0,0,1,0))
+
+``` 
+
+**Inferential Statistics** 
+
+```{r}
+
+# Chi-square test: Depression vs Suicidal Thoughts
+chisq.test(table(student_depression_dataset$Depression, 
+                 student_depression_dataset$Have.you.ever.had.suicidal.thoughts..))
+
+# t-test: Depression vs CGPA
+t.test(CGPA ~ Depression, data = student_depression_dataset)
+
+# t-test: Depression vs Sleep Hours
+t.test(Sleep.Hours ~ Depression, data = student_depression_dataset)
+
+# t-test: Depression vs Study Hours
+t.test(Study.Hours ~ Depression, data = student_depression_dataset)
+
+# t-test: Depression vs Diet Score
+t.test(Diet.Score ~ Depression, data = student_depression_dataset)
+
+# t-test: Depression vs Age
+t.test(Age ~ Depression, data = student_depression_dataset)
+
+# Wilcoxon test: Depression vs Academic Pressure
+# Academic Pressure was converted to numeric scale (ordinal) so we will use a non-parametric test.
+wilcox.test(Academic.Pressure ~ Depression, data = student_depression_dataset)
+
+# 8. Wilcoxon test: Depression vs Financial Stress
+wilcox.test(Financial.Stress ~ Depression, data = student_depression_dataset)
+
+# 9. Wilcoxon test: Depression vs Study Satisfaction
+wilcox.test(Study.Satisfaction ~ Depression, data = student_depression_dataset)
+
+# 10. Logistic regression: Predicting Depression
+# Combine all predictors that were either continuous or converted to ordinal scale.
+log_model <- glm(Depression ~ Sleep.Hours + Study.Hours + CGPA + Age + Diet.Score +
+                   Academic.Pressure + Financial.Stress + Study.Satisfaction +
+                   Have.you.ever.had.suicidal.thoughts.. + Family.History.of.Mental.Illness,
+                 data = student_depression_dataset, family = "binomial")
+summary(log_model)
+
+# Optional: Convert coefficients to odds ratios
+exp(coef(log_model))
+
+```
+
+The results show strong statistical evidence that several variables are significantly associated with depression among students. The chi-squared test between depression and suicidal thoughts yields a very high test statistic and a p-value less than 2.2e-16, indicating a strong relationship between the two. The t-tests show that students with depression tend to have slightly higher CGPA on average, get less sleep, study more hours per day, have lower diet scores (indicating worse eating habits), and are generally younger than those without depression. Each of these differences is statistically significant, with p-values well below 0.001. The Wilcoxon tests reveal that students with depression report higher levels of academic pressure and financial stress, and lower study satisfaction, suggesting that these ordinal stress-related factors differ significantly by depression status. Finally, the logistic regression model confirms and quantifies these relationships: all predictors included are statistically significant. For instance, having suicidal thoughts is the strongest predictor, increasing the odds of being depressed by over 12 times. Other notable effects include increased odds of depression with higher academic pressure and financial stress, while more sleep, higher diet score, age, and study satisfaction reduce the odds. Overall, the findings suggest that both lifestyle and psychological stressors meaningfully contribute to the likelihood of experiencing depression.
+
+
+Okay, Let us now test using other ML classification models like Logistic Regression, Random Forest Classifier, Decision Tree classifier, KNN Classifier.
+
+### Logistic Regression
+
+```{r}
+set.seed(123)
+
+student_depression_dataset$Depression <- as.factor(student_depression_dataset$Depression)
+
+split_index <- createDataPartition(student_depression_dataset$Depression, p = 0.7, list = FALSE)
+train_rf <- student_depression_dataset[split_index, ]
+test_rf  <- student_depression_dataset[-split_index, ]
+
+logit_model <- glm(Depression ~ ., data = train, family = "binomial")
+
+logit_probs <- predict(logit_model, newdata = test, type = "response")
+
+logit_predictions <- ifelse(logit_probs > 0.5, 1, 0)
+
+logit_conf_matrix <- confusionMatrix(as.factor(logit_predictions), test$Depression)
+
+print(logit_conf_matrix)
+cat("Logistic Regression Accuracy:", logit_conf_matrix$overall['Accuracy'], "\n")
+
+```
+
+
+### Random Forest Classifier
+
+```{r}
+
+rf_model <- randomForest(Depression ~ ., data = train_rf, ntree = 100)
+
+rf_predictions <- predict(rf_model, newdata = test_rf)
+
+rf_conf_matrix <- confusionMatrix(rf_predictions, test_rf$Depression)
+
+print(rf_conf_matrix)
+cat("Random Forest Accuracy:", rf_conf_matrix$overall['Accuracy'], "\n")
+
+```
+
+### Decision tree
+
+```{r}
+dt_model <- rpart(Depression ~ ., data = train, method = "class")
+
+dt_predictions <- predict(dt_model, newdata = test, type = "class")
+
+dt_conf_matrix <- confusionMatrix(dt_predictions, test$Depression)
+
+print(dt_conf_matrix)
+cat("Decision Tree Accuracy:", dt_conf_matrix$overall['Accuracy'], "\n")
+
+```
+
+### KNN Classifier
+
+```{r}
+train_knn <- train
+test_knn  <- test
+
+train_scaled <- as.data.frame(scale(train_knn[, -which(names(train_knn) == "Depression")]))
+test_scaled  <- as.data.frame(scale(test_knn[, -which(names(test_knn) == "Depression")]))
+
+train_scaled$Depression <- train_knn$Depression
+test_scaled$Depression  <- test_knn$Depression
+
+set.seed(123)
+knn_predictions <- knn(
+  train = train_scaled[, -which(names(train_scaled) == "Depression")],
+  test  = test_scaled[, -which(names(test_scaled) == "Depression")],
+  cl    = train_scaled$Depression,
+  k     = 5
+)
+
+knn_conf_matrix <- confusionMatrix(knn_predictions, test_scaled$Depression)
+
+print(knn_conf_matrix)
+cat("KNN Accuracy:", knn_conf_matrix$overall['Accuracy'], "\n")
+
+```
+
+Let's see the feature importance of this model since it has the highest accuracy.
+
+```{r}
+logit_importance <- summary(logit_model)$coefficients
+logit_df <- as.data.frame(logit_importance)
+logit_df$Variable <- rownames(logit_df)
+
+logit_df <- logit_df[logit_df$Variable != "(Intercept)", ]
+logit_df$AbsEffect <- abs(logit_df$Estimate)
+logit_df <- logit_df[order(-logit_df$AbsEffect), ]
+
+logit_plot_df <- logit_df
+
+ggplot(logit_plot_df, aes(x = reorder(Variable, Estimate), y = Estimate, fill = Estimate > 0)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "Feature Importance from Logistic Regression",
+    x = "Feature",
+    y = "Coefficient Estimate"
+  ) +
+  theme_minimal() +
+  scale_fill_manual(values = c("steelblue", "tomato"))
+
+
+```
+
+** Modeling with Interaction Terms** 
+
+```{r}
+
+car::vif(log_model)
+#VIFs show no multicollinearity issues, VIF values are well below the common threshold of 5.
+cat("Logistic Regression model AIC - ", AIC(log_model))
+
+log_model_interaction <- glm(
+  Depression ~ . + Academic.Pressure:Financial.Stress,
+  data = student_depression_dataset, 
+  family = "binomial"
+)
+summary(log_model_interaction)
+cat("AIC of Logistic Regression model with interaction Academic.Pressure * Financial.Stress  - ", AIC(log_model_interaction))
+
+
+
+log_model_interaction2 <- glm(
+  Depression ~ . + Sleep.Hours:Study.Hours,
+  data = student_depression_dataset, 
+  family = "binomial"
+)
+summary(log_model_interaction2)
+cat("AIC of Logistic Regression model with interaction Sleep.Hours × Study.Hours  - ", AIC(log_model_interaction2))
+
+
+
+log_model_interaction3 <- glm(
+  Depression ~ . + Diet.Score:Financial.Stress,
+  data = student_depression_dataset, 
+  family = "binomial"
+)
+summary(log_model_interaction3)
+cat("AIC of Logistic Regression model with interaction Diet.Score × Financial.Stress - ", AIC(log_model_interaction3))
+
+
+
+log_model_interaction4 <- glm(
+  Depression ~ . + Family.History.of.Mental.Illness:Have.you.ever.had.suicidal.thoughts..,
+  data = student_depression_dataset, 
+  family = "binomial"
+)
+summary(log_model_interaction4)
+cat("AIC of Logistic Regression model with interaction Family.History × Suicidal.Thoughts - ", AIC(log_model_interaction4))
+
+
+
+combined_model <- glm(
+  Depression ~ . + Diet.Score:Financial.Stress + Family.History.of.Mental.Illness:Have.you.ever.had.suicidal.thoughts..,
+  data = student_depression_dataset,
+  family = "binomial"
+)
+summary(combined_model)
+cat("AIC of Logistic Regression model with combined interactions Diet.Score * Financial.Stress AIC & Family.History.of.Mental.Illness * Have.you.ever.had.suicidal.thoughts - ", AIC(combined_model))
+
+
+
+combined_model2 <- glm(
+  Depression ~ . + Academic.Pressure:Financial.Stress + Family.History.of.Mental.Illness:Have.you.ever.had.suicidal.thoughts..,
+  data = student_depression_dataset,
+  family = "binomial"
+)
+summary(combined_model2)
+cat("AIC of Logistic Regression model with combined interactions Academic.Pressure*Financial.Stress + Family.History.of.Mental.Illness*Have.you.ever.had.suicidal.thoughts - ", AIC(combined_model2) )
+
+
+
+combined_model3 <- glm(
+  Depression ~ . + Academic.Pressure:Financial.Stress + Diet.Score:Financial.Stress,
+  data = student_depression_dataset,
+  family = "binomial"
+)
+summary(combined_model3)
+cat("AIC of Logistic Regression model with combined interactions Academic.Pressure*Financial.Stress + Diet.Score*Financial.Stress - ", AIC(combined_model3) )
+
+```
+
+
+
+After evaluating multiple logistic regression models with interaction terms, the model incorporating the interaction between Diet.Score and Financial.Stress (AIC = 19539) stands out as the best choice. This model demonstrates superior performance in terms of statistical fit and practical relevance compared to alternatives.
+The base model without any interactions has an AIC of 19543, while the Diet.Score × Financial.Stress interaction model reduces this to 19539 which is a meaningful improvement as ΔAIC reduces by -4. In contrast, other interactions either fail to lower the AIC (e.g., Academic.Pressure × Financial.Stress retains AIC = 19543) or offer only marginal gains (e.g., Sleep.Hours × Study.Hours reduces AIC by just 1). The combined models (e.g., Diet.Score × Financial.Stress + Family.History × Suicidal.Thoughts) yield no additional benefit as its AIC is 19541, confirming that simplicity is preferable.
+The Diet.Score × Financial.Stress interaction is statistically significant having p equal to 0.033, indicating it meaningfully contributes to predicting depression. This aligns with established research linking financial stress and poor diet to mental health deterioration.
+Also,When we combine multiple interactions like Diet.Score × Financial.Stress + Family.History × Suicidal.Thoughts . It introduces unnecessary complexity without improving fit as its AIC is 19541 which is greater than 19539 AIC for Diet.Score × Financial.Stress interaction.
+
+
