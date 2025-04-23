@@ -1,5 +1,5 @@
 ---
-title: "Final Project EDA + Stats"
+title: "Final Project on Student Depression"
 author: "Data Pandas"
 date: "`r Sys.Date()`"
 output: html_document
@@ -296,7 +296,7 @@ corrplot(cor_matrix, method = "color", type = "lower",
 
 ``` 
 
-**Inferential Statistics** 
+***Inferential Statistics*** 
 
 ```{r}
 
@@ -345,7 +345,7 @@ exp(coef(log_model))
 The results show strong statistical evidence that several variables are significantly associated with depression among students. The chi-squared test between depression and suicidal thoughts yields a very high test statistic and a p-value less than 2.2e-16, indicating a strong relationship between the two. The t-tests show that students with depression tend to have slightly higher CGPA on average, get less sleep, study more hours per day, have lower diet scores (indicating worse eating habits), and are generally younger than those without depression. Each of these differences is statistically significant, with p-values well below 0.001. The Wilcoxon tests reveal that students with depression report higher levels of academic pressure and financial stress, and lower study satisfaction, suggesting that these ordinal stress-related factors differ significantly by depression status. Finally, the logistic regression model confirms and quantifies these relationships: all predictors included are statistically significant. For instance, having suicidal thoughts is the strongest predictor, increasing the odds of being depressed by over 12 times. Other notable effects include increased odds of depression with higher academic pressure and financial stress, while more sleep, higher diet score, age, and study satisfaction reduce the odds. Overall, the findings suggest that both lifestyle and psychological stressors meaningfully contribute to the likelihood of experiencing depression.
 
 
-** Modeling with Interaction Terms** 
+**Modeling with Interaction Terms** 
 
 ```{r}
 
