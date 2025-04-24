@@ -302,7 +302,11 @@ corrplot(cor_matrix, method = "color", type = "lower",
 
 # Chi-square test: Depression vs Suicidal Thoughts
 chisq.test(table(student_depression_dataset$Depression, 
-                 student_depression_dataset$Have.you.ever.had.suicidal.thoughts..))
+                 student_depression_dataset$Have.you.ever.had.suicidal.thoughts..)) 
+
+# Chi-square test: Depression vs Family History of Mental Illness
+chisq.test(table(student_depression_dataset$Depression,
+                 student_depression_dataset$Family.History.of.Mental.Illness))
 
 # t-test: Depression vs CGPA
 t.test(CGPA ~ Depression, data = student_depression_dataset)
