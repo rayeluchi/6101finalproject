@@ -1,6 +1,6 @@
 ---
-title: "Summary Paper Introduction"
-author: "Meghan N. Casey"
+title: "Summary Paper"
+author: "Data Pandas"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -20,13 +20,13 @@ Produced by Team Data Pandas (Meghan Casey, Raye Hazel Oji, Siddardha Priyatham 
 
 ##Abstract
 
-  This study analyzes student depression and related factors with the aim of identifying students at risk of depression and providing data-driven recommendations on how University's can tailor their services to most effectively support their students' mental health. Our exploratory data analysis focuses on teh key question "what factors (or types of factors) contribute to student depression?". Our predictive modeling and machine learning aims to predict students at risk of depression based on available infomration about these factors. 
+  This study analyzes student depression and related factors with the aim of identifying students at risk of depression and providing data-driven recommendations on how University's can tailor their services to most effectively support their students' mental health. Our exploratory data analysis focuses on the key question "what factors (or types of factors) contribute to student depression?". Our predictive modeling and machine learning aims to predict students at risk of depression based on available information about these factors. 
   
-  @RAYE maybe add a second short paragraph or a few sentences briefly summarizing the conclusions here?
+We hope that the results of our investigation will be used by schools, community centers, and other entities that interact regularly with students to quickly identify students at risk of depression and implement support strategies to mitigate that risk. These results include significant relationships between depression and the variables: Academic Pressure, Financial Stress, Dietary Habits and CGPA. Although these variables were not the only ones to exhibit a significant correlation with depression, they are the ones around which our actionable recommendations will be most centered.   
 
 ##Introduction of the Research Problem & Background Analysis
 
-  Depression among students is a persistent concern, with many young people reporting mental health struggles. According to a 2024 study by US News, about 70% of students have struggled with metnal health since starting college. The annual Healthy Minds study found that during the 2023-2024 school year, 38% of undergraduates experienced symptoms of depression. As data science students ourselves, we see opportunity to use data to better understand the factors that contribute to student depression and inform resources available to contribute to student success at instituions such as George Washington University. By analyzing patterns across different personal, lifestyle, and stress and satisfaction related variables, we hope to help schools and mental health professionals design more targeted, effective interventions. Our emphasis on prediction allows such recommendations to be scaled up and widely implemenetd across colleges and universities. This research approach fills an important gap, because while many universities offer mental health services, they are often missing early detection and outreach. Our data-driven approach helps identify patterns and at-risk groups before crises develop, enabling proactive support strategies that are both more effective and allow a more efficient allocatio of university resources.
+  Depression among students is a persistent concern, with many young people reporting mental health struggles. According to a 2024 study by US News, about 70% of students have struggled with mental health since starting college. The annual Healthy Minds study found that during the 2023-2024 school year, 38% of undergraduates experienced symptoms of depression. As data science students ourselves, we see opportunity to use data to better understand the factors that contribute to student depression and inform resources available to contribute to student success at institutions such as George Washington University. By analyzing patterns across different personal, lifestyle, and stress and satisfaction related variables, we hope to help schools and mental health professionals design more targeted, effective interventions. Our emphasis on prediction allows such recommendations to be scaled up and widely implemented across colleges and universities. This research approach fills an important gap, because while many universities offer mental health services, they are often missing early detection and outreach. Our data-driven approach helps identify patterns and at-risk groups before crises develop, enabling proactive support strategies that are both more effective and allow a more efficient allocation of university resources.
   
 ##About Our Dataset
 
