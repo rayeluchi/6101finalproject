@@ -116,6 +116,11 @@ The next step of our research is to investigate whether machine learning models 
 
 ###Conclusion 
 
+Our research sheds light on some of the key factors that contribute to depression among university students. Through a combination of statistical testing and regression modeling, we identified strong relationships between depression and variables such as academic pressure, financial stress, sleep, diet, and study satisfaction. Some of these findings aligned with our expectations, like the strong association between suicidal thoughts and depression. Others were less intuitive. For example, students with higher GPAs were slightly more likely to report depression, which challenges the common assumption that strong academic performance always reflects emotional well-being.
+
+At GW, several programs are already in place to support student wellness. The Store, GW's campus food pantry, plays an important role in addressing food insecurity, which we found to be closely linked to mental health through our analysis of diet quality. Academic support programs aimed at underperforming students are also crucial. However, our results suggest the need to expand that outreach to include high-achieving students as well. Just because someone is doing well academically doesn’t mean they aren’t struggling mentally. Proactively checking in with students across the performance spectrum could help identify issues early, especially for those who may be dealing with burnout or perfectionism behind the scenes.
+
+Moving forward, universities like GW can use insights from this kind of research to shape more targeted, preventative mental health strategies. Increasing access to financial counseling, encouraging healthy sleep and eating habits, and fostering environments that reduce academic pressure without lowering standards are just a few examples. Most importantly, recognizing that depression is influenced by a wide range of everyday stressors can help shift support systems from reactive to proactive. We hope our work contributes to that ongoing effort and helps make mental health a more visible and integrated part of campus life.
 
   
 ###Sources
