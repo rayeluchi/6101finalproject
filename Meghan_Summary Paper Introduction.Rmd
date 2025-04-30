@@ -1,6 +1,6 @@
 ---
-title: "Summary Paper Introduction"
-author: "Meghan N. Casey"
+title: "Summary Paper"
+author: "Data Pandas"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -20,13 +20,13 @@ Produced by Team Data Pandas (Meghan Casey, Raye Hazel Oji, Siddardha Priyatham 
 
 ##Abstract
 
-  This study analyzes student depression and related factors with the aim of identifying students at risk of depression and providing data-driven recommendations on how University's can tailor their services to most effectively support their students' mental health. Our exploratory data analysis focuses on teh key question "what factors (or types of factors) contribute to student depression?". Our predictive modeling and machine learning aims to predict students at risk of depression based on available infomration about these factors. 
+  This study analyzes student depression and related factors with the aim of identifying students at risk of depression and providing data-driven recommendations on how University's can tailor their services to most effectively support their students' mental health. Our exploratory data analysis focuses on the key question "what factors (or types of factors) contribute to student depression?". Our predictive modeling and machine learning aims to predict students at risk of depression based on available information about these factors. 
   
-  @RAYE maybe add a second short paragraph or a few sentences briefly summarizing the conclusions here?
+  We hope that the results of our investigation will be used by schools, community centers, and other entities that interact regularly with students to quickly identify students at risk of depression and implement support strategies to mitigate that risk. These results include significant relationships between depression and the variables: Academic Pressure, Financial Stress, Dietary Habits and CGPA. Although these variables were not the only ones to exhibit a significant correlation with depression, they are the ones around which our actionable recommendations will be most centered.   
 
 ##Introduction of the Research Problem & Background Analysis
 
-  Depression among students is a persistent concern, with many young people reporting mental health struggles. According to a 2024 study by US News, about 70% of students have struggled with metnal health since starting college. The annual Healthy Minds study found that during the 2023-2024 school year, 38% of undergraduates experienced symptoms of depression. As data science students ourselves, we see opportunity to use data to better understand the factors that contribute to student depression and inform resources available to contribute to student success at instituions such as George Washington University. By analyzing patterns across different personal, lifestyle, and stress and satisfaction related variables, we hope to help schools and mental health professionals design more targeted, effective interventions. Our emphasis on prediction allows such recommendations to be scaled up and widely implemenetd across colleges and universities. This research approach fills an important gap, because while many universities offer mental health services, they are often missing early detection and outreach. Our data-driven approach helps identify patterns and at-risk groups before crises develop, enabling proactive support strategies that are both more effective and allow a more efficient allocatio of university resources.
+  Depression among students is a persistent concern, with many young people reporting mental health struggles. According to a 2024 study by US News, about 70% of students have struggled with mental health since starting college. The annual Healthy Minds study found that during the 2023-2024 school year, 38% of undergraduates experienced symptoms of depression. As data science students ourselves, we see opportunity to use data to better understand the factors that contribute to student depression and inform resources available to contribute to student success at institutions such as George Washington University. By analyzing patterns across different personal, lifestyle, and stress and satisfaction related variables, we hope to help schools and mental health professionals design more targeted, effective interventions. Our emphasis on prediction allows such recommendations to be scaled up and widely implemented across colleges and universities. This research approach fills an important gap, because while many universities offer mental health services, they are often missing early detection and outreach. Our data-driven approach helps identify patterns and at-risk groups before crises develop, enabling proactive support strategies that are both more effective and allow a more efficient allocation of university resources.
   
 ##About Our Dataset
 
@@ -50,9 +50,79 @@ Produced by Team Data Pandas (Meghan Casey, Raye Hazel Oji, Siddardha Priyatham 
   -Financial Stress
   -Family History of Mental Illness
   
-We delve into these variables in more detail in our data processing and exploratory data anlysis sections. 
+We delve into these variables in more detail in our data processing and exploratory data analysis sections. 
+
+##EDA 
+SIVA 
+
+##Inferential Statistics 
+
+To facilitate our audience's understanding of our variables and their resulting recommendations, we have divided the variables into three main categories: 
+- Personal Stats: Characteristics that vary based on each student's circumstances and personal history
+- Stress and Satisfaction:  Metrics that measure each student's stress and satisfaction in different parts of their lives
+- Lifestyle Factors: Habits that students do or don't do that may be affecting their mental health 
+
+We will discuss each of these categories' variables, and the results of their respective inferential tests and a logistic regression model that we built to compare the significance of each variable in relation to Depression. 
 
 
+#Personal Stats 
+
+Under this category we have: Age, CGPA, Family History of Mental Illness, and Suicidal Thoughts. 
+
+#Age 
+
+  For Age, most students fell in the 20s and 30s age range, with a few outliers in their 40s. We decided to conduct a t-test between Age and Depression as both variables were numeric (Depression was binary coded with 0 meaning no depression and 1 meaning the student self-identified as being depressed). We found that depressed students, on average, are younger than non-depressed students with depressed students having an average age of 24.89 and non-depressed students having an average age of 27.14 years. Our p value of p < 2.2e-16 also indicated that this difference was highly significant. According to our logistic regression model, each additional year of age reduces the odds of depression by roughly 10.5%. These results contradicted our previous assumptions about the relationship between Age and Depression. We had previously thought that older students would have higher chances of depression due to external responsibilities or being in the minority among their peers. And although these factors may negatively impact some older students' experiences, our data shows that younger students are still at a higher risk of depression. 
+
+#CGPA 
+
+  We explored the relationship between CGPA and Depression using a t-test, as both variables were numeric with Depression coded as 0 (no depression) and 1 (self-identified depression). We found that students who reported depression had a slightly higher average CGPA (7.68) compared to those who did not (7.62). This difference was statistically significant with a p-value of 0.0002207. Although the difference in means is small, our logistic regression model also found CGPA to be a significant predictor, with each unit increase in CGPA increasing the odds of depression by about 6.5%. One possible explanation is that higher-performing students may experience more pressure or perfectionism, which can contribute to mental health challenges.
+
+#Family History of Mental Illness 
+
+  We tested the relationship between having a family history of mental illness and reporting depression using a chi-square test. The results showed a statistically significant association (χ2=79.43, p<2.2×10−16), indicating that students with a family history of mental illness are more likely to report experiencing depression themselves. This finding was further supported by our logistic regression model, which showed that having a family history increases the odds of depression by about 28%. These results are consistent with existing research suggesting that mental health challenges often run in families due to a combination of genetic, environmental, and learned behavioral factors. 
+
+#Suicidal Thoughts 
+
+  We analyzed the relationship between suicidal thoughts and depression using a chi-square test, since both variables were binary factor variables. The test produced an extremely strong result (χ2=8323.9, p<2.2×10−16), confirming a very strong association between the two variables. In our logistic regression model, having suicidal thoughts was by far the most powerful predictor of depression, increasing the odds by more than 12 times. While this connection may seem obvious, it is still important to formally investigate and quantify it. Doing so reinforces the critical need for early intervention when suicidal ideation is reported. Additionally, suicidal thoughts can manifest in many different ways beyond just direct ideation, including passive thoughts about death, self-isolation, or feelings of hopelessness. By treating this relationship as a key data point rather than an assumption, we emphasize the importance of recognizing and addressing these broader warning signs within student populations. 
+
+#Stress and Satisfaction
+
+Under this category we have: Financial Stress, Academic Pressure, and Study Satisfaction. 
+
+#Financial Stress
+We used a Wilcoxon rank-sum test to examine the relationship between Financial Stress and Depression, since Financial Stress was recorded as an ordinal numeric variable and Depression was binary. The test returned a highly significant result (p < 2.2e-16), indicating that students with depression tend to report higher levels of financial stress. In the logistic regression model, each one-unit increase in financial stress increased the odds of depression by approximately 74%. This finding underscores how financial pressures—such as tuition costs, living expenses, or job insecurity—can meaningfully affect students' mental health. While financial challenges are often treated as separate from psychological ones, our results show they are deeply interconnected.
+
+#Academic Pressure
+To assess the relationship between Academic Pressure and Depression, we performed a Wilcoxon rank-sum test due to the ordinal structure of the pressure variable. The results were highly significant (p < 2.2e-16), and our logistic regression model revealed that each one-unit increase in academic pressure more than doubled the odds of depression (odds ratio = 2.31). This was one of the strongest predictors in our model. These results reflect how academic expectations, deadlines, and the fear of underperformance can take a toll on students’ mental well-being. While academic rigor is often seen as a core part of higher education, our findings suggest that unrelenting pressure may come at the cost of student mental health.
+
+#Study Satisfaction
+Study Satisfaction was compared across depression groups using a Wilcoxon test, since it was measured on an ordinal numeric scale. The results were statistically significant (p < 2.2e-16), with students reporting depression tending to express lower satisfaction with their studies. In our logistic regression model, each unit increase in satisfaction was associated with a 22% decrease in the odds of depression. This suggests that students who feel engaged and fulfilled by their academic experience may be more resilient to mental health challenges. It also highlights the importance of not just academic performance, but academic meaning and alignment with personal goals.
+
+#Lifestyle Factors
+
+Under this category we have: Sleep Hours, Diet Score, and Study Hours. 
+
+#Sleep Hours
+Sleep Hours was analyzed using a t-test, given its numeric nature and the binary coding of Depression. Students with depression reported significantly fewer hours of sleep (6.20 hours vs 6.53), with a p-value less than 2.2e-16. The logistic regression model supported this, showing that each additional hour of sleep reduces the odds of depression by roughly 10%. These findings align with well-established research linking poor sleep to mental health issues. Importantly, this connection suggests that promoting good sleep hygiene could be a straightforward and accessible intervention for improving student well-being.
+
+#Diet Score
+We tested the relationship between Diet Score and Depression using a t-test, as Diet Score was encoded numerically. Students who reported depression had a lower average diet score (1.77 vs 2.10), and this difference was highly significant (p < 2.2e-16). The regression model showed that each unit increase in diet score reduced the odds of depression by about 42%. This strong inverse relationship indicates that dietary habits may play a meaningful role in supporting mental health. Although diet is often overlooked in mental health discussions, our results reinforce that nutrition is a modifiable factor with potential mental health benefits.
+
+#Study Hours
+We used a t-test to examine the association between Study Hours and Depression. The results showed that depressed students study significantly more on average (7.81 hours vs 6.24 hours), with a p-value < 2.2e-16. In the logistic regression model, each additional hour of study was associated with a 12% increase in the odds of depression. This finding may reflect academic overload, perfectionism, or pressure to achieve, all of which can contribute to mental strain. While time spent studying is often seen as a positive behavior, our results suggest that excessive study time might also signal underlying stress or burnout. 
+
+The next step of our research is to investigate whether machine learning models can accurately predict students at risk of depression based on our dataset.
+
+
+###Conclusion 
+
+Our research sheds light on some of the key factors that contribute to depression among university students. Through a combination of statistical testing and regression modeling, we identified strong relationships between depression and variables such as academic pressure, financial stress, sleep, diet, and study satisfaction. Some of these findings aligned with our expectations, like the strong association between suicidal thoughts and depression. Others were less intuitive. For example, students with higher GPAs were slightly more likely to report depression, which challenges the common assumption that strong academic performance always reflects emotional well-being.
+
+At GW, several programs are already in place to support student wellness. The Store, GW's campus food pantry, plays an important role in addressing food insecurity, which we found to be closely linked to mental health through our analysis of diet quality. Academic support programs aimed at underperforming students are also crucial. However, our results suggest the need to expand that outreach to include high-achieving students as well. Just because someone is doing well academically doesn’t mean they aren’t struggling mentally. Proactively checking in with students across the performance spectrum could help identify issues early, especially for those who may be dealing with burnout or perfectionism behind the scenes.
+
+Moving forward, universities like GW can use insights from this kind of research to shape more targeted, preventative mental health strategies. Increasing access to financial counseling, encouraging healthy sleep and eating habits, and fostering environments that reduce academic pressure without lowering standards are just a few examples. Most importantly, recognizing that depression is influenced by a wide range of everyday stressors can help shift support systems from reactive to proactive. We hope our work contributes to that ongoing effort and helps make mental health a more visible and integrated part of campus life.
+
+  
 ###Sources
 
 U.S. News. Mental Health on College Campuses: Challenges and Solutions. 6 June 2024. https://www.usnews.com/news/education-news/articles/mental-health-on-college-campuses-challenges-and-solutions#google_vignette. 

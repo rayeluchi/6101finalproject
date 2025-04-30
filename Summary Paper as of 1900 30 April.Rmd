@@ -1,0 +1,658 @@
+---
+title: "Summary Paper"
+author: "Data Pandas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+#Data Driven Predictions of Student Depression
+Produced by Team Data Pandas (Meghan Casey, Raye Hazel Oji, Siddardha Priyatham Reddy (Siddu)  Yaraguti, Venkata Siva Kumar Reddy Madire (SIVA), Siddhant Saxena)
+
+# **Abstract**
+
+  This study analyzes student depression and related factors with the aim of identifying students at risk of depression and providing data-driven recommendations on how University's can tailor their services to most effectively support their students' mental health. Our exploratory data analysis focuses on the key question "what factors (or types of factors) contribute to student depression?". Our predictive modeling and machine learning aims to predict students at risk of depression based on available information about these factors. 
+  
+  We hope that the results of our investigation will be used by schools, community centers, and other entities that interact regularly with students to quickly identify students at risk of depression and implement support strategies to mitigate that risk. These results include significant relationships between depression and the variables: Academic Pressure, Financial Stress, Dietary Habits and CGPA. Although these variables were not the only ones to exhibit a significant correlation with depression, they are the ones around which our actionable recommendations will be most centered.   
+
+# **Introduction of the Research Problem & Background Analysis**
+
+  Depression among students is a persistent concern, with many young people reporting mental health struggles. According to a 2024 study by US News, about 70% of students have struggled with mental health since starting college. The annual Healthy Minds study found that during the 2023-2024 school year, 38% of undergraduates experienced symptoms of depression. As data science students ourselves, we see opportunity to use data to better understand the factors that contribute to student depression and inform resources available to contribute to student success at institutions such as George Washington University. By analyzing patterns across different personal, lifestyle, and stress and satisfaction related variables, we hope to help schools and mental health professionals design more targeted, effective interventions. Our emphasis on prediction allows such recommendations to be scaled up and widely implemented across colleges and universities. This research approach fills an important gap, because while many universities offer mental health services, they are often missing early detection and outreach. Our data-driven approach helps identify patterns and at-risk groups before crises develop, enabling proactive support strategies that are both more effective and allow a more efficient allocation of university resources.
+  
+# **About Our Dataset**
+
+  The dataset we use for this study is from Kaggle.com. It contains 27,902 observations, each of which represents a student, and 18 variables associated with each student. Our target variable is "depression", which is coded as a binary 0/1 variable where 0 reprsents no presence of depression and 1 represents depression. We considered one of the featurs in the dataset, "presence of suicidal thoughts" as a possible proxy indicator for depression, but chose to focus solely on the depression variable based on psychological studies that have proven a meaningful distinction between these two factors. The remaining variables are personal attributes, lifestyle factors, and measures of different types of stress that could be contributing to depression. Specifically our dataset includes entries for:
+  
+  - ID
+  -Gender
+  -Age
+  -City
+  -Profession
+  -Academic Pressure
+  -Work Pressure
+  -Cumulative GPA
+  -Study Satisfaction
+  -Job Satisfaction
+  -Sleep Duration
+  -Dietary Habits
+  -Degree Type
+  -Suicidal Thoughts
+  -Work/Study Hours
+  -Financial Stress
+  -Family History of Mental Illness
+  
+We delve into these variables in more detail in our data processing and exploratory data analysis sections. 
+
+*Loading the Dataset*
+
+```{r include=T}
+student_depression_dataset <- read.csv("student_depression_dataset.csv")
+library(ezids)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(gridExtra)
+library(stringr)  
+library(corrplot)
+library(randomForest)
+library(rpart)
+library(caret)
+library(class)
+```
+
+# *Data Preview*
+
+Before cleaning the data, let's explore the import to get a sense of what we are starting with. 
+
+```{r}
+head(student_depression_dataset, n=5)
+tail(student_depression_dataset, n=3)
+``` 
+
+```{r}
+
+str(student_depression_dataset)
+summary(student_depression_dataset)
+
+```
+
+# *Data Cleaning*
+
+To make our analysis easier, we can remove some of the unnecessary columns like Id, Profession, City. We will also remove the Work presuure and Job satisfaction since our main goal is to Identify the students who are at risk 
+
+```{r}
+student_depression_dataset$id <- NULL
+student_depression_dataset$Profession <- NULL
+student_depression_dataset$City <- NULL
+student_depression_dataset$Work.Pressure <- NULL
+student_depression_dataset$Job.Satisfaction <- NULL
+student_depression_dataset$Study.Hours <- student_depression_dataset$Work.Study.Hours
+student_depression_dataset$Work.Study.Hours<- NULL
+```
+
+Check for duplicates and missing values
+
+```{r}
+
+duplicates_count <- sum(duplicated(student_depression_dataset))
+duplicates_count
+
+student_depression_dataset <- student_depression_dataset[!duplicated(student_depression_dataset), ]
+
+cat("Number of duplicates removed:", duplicates_count, "\n")
+cat("Rows remaining after removing duplicates:", nrow(student_depression_dataset), "\n")
+str(student_depression_dataset)
+
+missing_values <- colSums(is.na(student_depression_dataset))
+missing_values
+```
+
+We also need to convert some variables into the proper type.
+
+Let's see the unique values in every column so that we can change their type accordingly
+
+```{r}
+for (col in names(student_depression_dataset)) {
+  cat("\n\nColumn:", col, "\n")
+  print(unique(student_depression_dataset[[col]]))
+}
+```
+
+First' We will convert the Degree to years of education and make the Sleep Duration a numerical variable.
+
+```{r}
+student_depression_dataset$Degree <- gsub("[‘’'“”\"]", "", student_depression_dataset$Degree)
+student_depression_dataset$Sleep.Duration <- gsub("[‘’'“”\"]", "", student_depression_dataset$Sleep.Duration)
+
+student_depression_dataset$Education.Years <- recode(student_depression_dataset$Degree,
+  "Class 12" = 12,
+  "BA" = 16, "BSc" = 16, "B.Com" = 16, "BBA" = 16, "BCA" = 16, "B.Ed" = 16,
+  "B.Tech" = 16, "BE" = 16, "BHM" = 16, "B.Arch" = 16, "B.Pharm" = 16, "MBBS" = 16, "LLB" = 16,
+  "MA" = 18, "MSc" = 18, "M.Com" = 18, "M.Ed" = 18, "M.Tech" = 18, "MBA" = 18,
+  "MCA" = 18, "ME" = 18, "M.Pharm" = 18, "MHM" = 18, "LLM" = 18, "MD" = 18,
+  "PhD" = 21,
+  "Others" = 16,
+  .default = 16
+
+)
+
+student_depression_dataset$Sleep.Hours <- recode(student_depression_dataset$Sleep.Duration,
+  "Less than 5 hours" = 4,
+  "5-6 hours" = 5.5,
+  "7-8 hours" = 7.5,
+  "More than 8 hours" = 9,
+  "Others" = 6.5,
+  .default = 6.5
+)
+
+student_depression_dataset$Degree <- NULL
+student_depression_dataset$Sleep.Duration <- NULL
+
+
+```
+
+Now, there are some ordinal variables like dietary habits into numerical with increasing levels.
+
+```{r}
+student_depression_dataset$Academic.Pressure[
+  student_depression_dataset$Academic.Pressure == "0"
+] <- "3"
+student_depression_dataset$Financial.Stress[
+  student_depression_dataset$Financial.Stress == "?"
+] <- "3.0"
+
+student_depression_dataset$Diet.Score <- recode(student_depression_dataset$Dietary.Habits,
+  "Unhealthy" = 1,
+  "Moderate" = 2,
+  "Healthy" = 3,
+  .default = 2
+)
+
+student_depression_dataset$Dietary.Habits <- NULL
+str(student_depression_dataset)
+```
+
+
+Now let us convert the required variables into integer for simplification.
+```{r}
+
+student_depression_dataset$Academic.Pressure <- as.integer(
+  student_depression_dataset$Academic.Pressure
+)
+
+student_depression_dataset$Financial.Stress <- as.integer(
+  student_depression_dataset$Financial.Stress
+)
+student_depression_dataset$Gender <- as.factor(student_depression_dataset$Gender)
+student_depression_dataset$Depression <- as.factor(student_depression_dataset$Depression)
+student_depression_dataset$Academic.Pressure <- as.integer(student_depression_dataset$Academic.Pressure)
+
+ezids::xkablesummary(student_depression_dataset)
+```
+
+ 
+# **EDA**
+
+## *Distribution by Depression variable*
+
+```{r}
+
+ggplot(student_depression_dataset, aes(x = Depression)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Distribution of Depression Cases", x = "Depression", y = "Count") +
+  theme_minimal()
+
+```
+
+This bar chart shows the overall count of students with and without depression. It helps understand the class distribution, highlighting any class imbalance.
+
+## *Depression Distribution by Gender*
+
+```{r}
+ggplot(student_depression_dataset, aes(x = Gender, fill = Depression)) +
+  geom_bar(position = "fill") +
+  labs(title = "Depression Proportion by Gender", y = "Proportion") +
+  theme_minimal()
+
+```
+
+This stacked proportion bar plot compares depression rates between genders. It allows us to observe whether one gender shows relatively higher depression levels. In our case, there is no much difference.
+
+## *Distribution of Numerical Features*
+
+```{r}
+num_vars <- c("Age", "CGPA", "Sleep.Hours", "Study.Hours", "Academic.Pressure", 
+              "Financial.Stress", "Diet.Score", "Education.Years")
+
+student_depression_dataset %>%
+  select(all_of(num_vars)) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Value") %>%
+  ggplot(aes(x = Value)) +
+  geom_histogram(bins = 30, fill = "skyblue", color = "black") +
+  facet_wrap(~ Variable, scales = "free", ncol = 3) +
+  labs(title = "Histograms of Numerical Features") +
+  theme_minimal()
+
+```
+
+Histograms of all key numerical features in the dataset like Academic Pressure, Age, CGPA, Diet SCore, Education Years, Financial stresss, Sleep Hours and Study hours.
+
+Thease histograms helps us detect any skewness or outliers in the dataset.
+
+
+## *Depression Rate by Sleep Group (Barplot)*
+
+```{r}
+student_depression_dataset %>%
+  group_by(Sleep.Hours, Depression) %>%
+  summarise(count = n()) %>%
+  mutate(prop = count / sum(count)) %>%
+  ggplot(aes(x = factor(Sleep.Hours), y = prop, fill = Depression)) +
+  geom_bar(stat = "identity", position = "fill") +
+  labs(title = "Depression Rate by Sleep Hours", y = "Proportion") +
+  theme_minimal()
+
+```
+
+This is a Proportional bar plot of depression cases across different sleep durations. this let's us know whether there is any relation between the Sleep hours and the target variable deporession. 
+
+The plots clearly tells us that students who sleep less than 4 hours and students who sleep more than 7.5 hours tend to have more depression cases than the others.
+
+
+## *Boxplots of Numerical Features vs Depression*
+
+```{r}
+# Boxplot function for multiple features
+vars <- c("CGPA", "Sleep.Hours", "Study.Hours", "Age")
+
+for (v in vars) {
+  print(
+    ggplot(student_depression_dataset, aes_string(x = "Depression", y = v, fill = "Depression")) +
+      geom_boxplot() +
+      labs(title = paste("Boxplot of", v, "by Depression")) +
+      theme_minimal()
+  )
+}
+```
+
+These boxplots shows us the Depression proportions for different numerical variables like Age, Sleep Hours, Study Hours, CGPA.
+
+## *Stacked Bar Plots: Categorical Scores vs Depression*
+
+```{r}
+# Academic Pressure vs Depression
+ggplot(student_depression_dataset, aes(x = factor(Academic.Pressure), fill = Depression)) +
+  geom_bar(position = "fill") +
+  labs(title = "Academic Pressure vs Depression", x = "Academic Pressure Score", y = "Proportion") +
+  theme_minimal()
+
+# Financial Stress vs Depression
+ggplot(student_depression_dataset, aes(x = factor(Financial.Stress), fill = Depression)) +
+  geom_bar(position = "fill") +
+  labs(title = "Financial Stress vs Depression", x = "Financial Stress Score", y = "Proportion") +
+  theme_minimal()
+
+```
+These stacked plots tells us about the Depression proportions across the different CAtegorical variables like the Academic Pressure and the Financial Stress.
+
+The plots clearly tells us that the more the score of Academic/ Financial pressure, The more the Depression.
+
+Now we can plot a Correlation heatmap and see what variables have strong Correlations with one another.
+
+## *Correlation Heatmap*
+
+```{r}
+# Select numeric columns and compute correlation
+num_data <- student_depression_dataset %>%
+  dplyr::select(where(is.numeric)) %>%
+  na.omit()
+
+cor_matrix <- cor(num_data)
+
+# Base corrplot
+corrplot(cor_matrix, method = "color", type = "lower", 
+         tl.col = "black", tl.srt = 45, 
+         addCoef.col = "black", number.cex = 0.7,
+         title = "Correlation Heatmap", mar = c(0,0,1,0))
+
+``` 
+
+There is no significant correlation between the variables. The Age and the Education years have a correlation on 0.59 which is very significant b ut is not required for our analysis.
+
+Hence, we can move to the Inferential Statistics now to check which variables contribuut the target variable depression by using different tests like Chi squared, T-test e.t.c..
+
+# *Inferential Statistics*
+
+```{r}
+
+# Chi-square test: Depression vs Suicidal Thoughts
+chisq.test(table(student_depression_dataset$Depression, 
+                 student_depression_dataset$Have.you.ever.had.suicidal.thoughts..))
+
+# t-test: Depression vs CGPA
+t.test(CGPA ~ Depression, data = student_depression_dataset)
+
+# t-test: Depression vs Sleep Hours
+t.test(Sleep.Hours ~ Depression, data = student_depression_dataset)
+
+# t-test: Depression vs Study Hours
+t.test(Study.Hours ~ Depression, data = student_depression_dataset)
+
+# t-test: Depression vs Diet Score
+t.test(Diet.Score ~ Depression, data = student_depression_dataset)
+
+# t-test: Depression vs Age
+t.test(Age ~ Depression, data = student_depression_dataset)
+
+# Wilcoxon test: Depression vs Academic Pressure
+# Academic Pressure was converted to numeric scale (ordinal) so we will use a non-parametric test.
+wilcox.test(Academic.Pressure ~ Depression, data = student_depression_dataset)
+
+# 8. Wilcoxon test: Depression vs Financial Stress
+wilcox.test(Financial.Stress ~ Depression, data = student_depression_dataset)
+
+# 9. Wilcoxon test: Depression vs Study Satisfaction
+wilcox.test(Study.Satisfaction ~ Depression, data = student_depression_dataset)
+
+# 10. Logistic regression: Predicting Depression
+# Combine all predictors that were either continuous or converted to ordinal scale.
+log_model <- glm(Depression ~ Sleep.Hours + Study.Hours + CGPA + Age + Diet.Score +
+                   Academic.Pressure + Financial.Stress + Study.Satisfaction +
+                   Have.you.ever.had.suicidal.thoughts.. + Family.History.of.Mental.Illness,
+                 data = student_depression_dataset, family = "binomial")
+summary(log_model)
+
+# Optional: Convert coefficients to odds ratios
+exp(coef(log_model))
+
+```
+
+
+To facilitate our audience's understanding of our variables and their resulting recommendations, we have divided the variables into three main categories: 
+- Personal Stats: Characteristics that vary based on each student's circumstances and personal history
+- Stress and Satisfaction:  Metrics that measure each student's stress and satisfaction in different parts of their lives
+- Lifestyle Factors: Habits that students do or don't do that may be affecting their mental health 
+
+We will discuss each of these categories' variables, and the results of their respective inferential tests and a logistic regression model that we built to compare the significance of each variable in relation to Depression. 
+
+
+# *Personal Stats*
+
+Under this category we have: Age, CGPA, Family History of Mental Illness, and Suicidal Thoughts. 
+
+# **Age**
+
+  For Age, most students fell in the 20s and 30s age range, with a few outliers in their 40s. We decided to conduct a t-test between Age and Depression as both variables were numeric (Depression was binary coded with 0 meaning no depression and 1 meaning the student self-identified as being depressed). We found that depressed students, on average, are younger than non-depressed students with depressed students having an average age of 24.89 and non-depressed students having an average age of 27.14 years. Our p value of p < 2.2e-16 also indicated that this difference was highly significant. According to our logistic regression model, each additional year of age reduces the odds of depression by roughly 10.5%. These results contradicted our previous assumptions about the relationship between Age and Depression. We had previously thought that older students would have higher chances of depression due to external responsibilities or being in the minority among their peers. And although these factors may negatively impact some older students' experiences, our data shows that younger students are still at a higher risk of depression. 
+
+# **CGPA** 
+
+  We explored the relationship between CGPA and Depression using a t-test, as both variables were numeric with Depression coded as 0 (no depression) and 1 (self-identified depression). We found that students who reported depression had a slightly higher average CGPA (7.68) compared to those who did not (7.62). This difference was statistically significant with a p-value of 0.0002207. Although the difference in means is small, our logistic regression model also found CGPA to be a significant predictor, with each unit increase in CGPA increasing the odds of depression by about 6.5%. One possible explanation is that higher-performing students may experience more pressure or perfectionism, which can contribute to mental health challenges.
+
+# **Family History of Mental Illness** 
+
+  We tested the relationship between having a family history of mental illness and reporting depression using a chi-square test. The results showed a statistically significant association (χ2=79.43, p<2.2×10−16), indicating that students with a family history of mental illness are more likely to report experiencing depression themselves. This finding was further supported by our logistic regression model, which showed that having a family history increases the odds of depression by about 28%. These results are consistent with existing research suggesting that mental health challenges often run in families due to a combination of genetic, environmental, and learned behavioral factors. 
+
+# **Suicidal Thoughts** 
+
+  We analyzed the relationship between suicidal thoughts and depression using a chi-square test, since both variables were binary factor variables. The test produced an extremely strong result (χ2=8323.9, p<2.2×10−16), confirming a very strong association between the two variables. In our logistic regression model, having suicidal thoughts was by far the most powerful predictor of depression, increasing the odds by more than 12 times. While this connection may seem obvious, it is still important to formally investigate and quantify it. Doing so reinforces the critical need for early intervention when suicidal ideation is reported. Additionally, suicidal thoughts can manifest in many different ways beyond just direct ideation, including passive thoughts about death, self-isolation, or feelings of hopelessness. By treating this relationship as a key data point rather than an assumption, we emphasize the importance of recognizing and addressing these broader warning signs within student populations. 
+
+# **Stress and Satisfaction**
+
+Under this category we have: Financial Stress, Academic Pressure, and Study Satisfaction. 
+
+# **Financial Stress**
+We used a Wilcoxon rank-sum test to examine the relationship between Financial Stress and Depression, since Financial Stress was recorded as an ordinal numeric variable and Depression was binary. The test returned a highly significant result (p < 2.2e-16), indicating that students with depression tend to report higher levels of financial stress. In the logistic regression model, each one-unit increase in financial stress increased the odds of depression by approximately 74%. This finding underscores how financial pressures—such as tuition costs, living expenses, or job insecurity—can meaningfully affect students' mental health. While financial challenges are often treated as separate from psychological ones, our results show they are deeply interconnected.
+
+# **Academic Pressure**
+To assess the relationship between Academic Pressure and Depression, we performed a Wilcoxon rank-sum test due to the ordinal structure of the pressure variable. The results were highly significant (p < 2.2e-16), and our logistic regression model revealed that each one-unit increase in academic pressure more than doubled the odds of depression (odds ratio = 2.31). This was one of the strongest predictors in our model. These results reflect how academic expectations, deadlines, and the fear of underperformance can take a toll on students’ mental well-being. While academic rigor is often seen as a core part of higher education, our findings suggest that unrelenting pressure may come at the cost of student mental health.
+
+# **Study Satisfaction**
+Study Satisfaction was compared across depression groups using a Wilcoxon test, since it was measured on an ordinal numeric scale. The results were statistically significant (p < 2.2e-16), with students reporting depression tending to express lower satisfaction with their studies. In our logistic regression model, each unit increase in satisfaction was associated with a 22% decrease in the odds of depression. This suggests that students who feel engaged and fulfilled by their academic experience may be more resilient to mental health challenges. It also highlights the importance of not just academic performance, but academic meaning and alignment with personal goals.
+
+# *Lifestyle Factors*
+
+Under this category we have: Sleep Hours, Diet Score, and Study Hours. 
+
+# **Sleep Hours**
+Sleep Hours was analyzed using a t-test, given its numeric nature and the binary coding of Depression. Students with depression reported significantly fewer hours of sleep (6.20 hours vs 6.53), with a p-value less than 2.2e-16. The logistic regression model supported this, showing that each additional hour of sleep reduces the odds of depression by roughly 10%. These findings align with well-established research linking poor sleep to mental health issues. Importantly, this connection suggests that promoting good sleep hygiene could be a straightforward and accessible intervention for improving student well-being.
+
+# **Diet Score**
+We tested the relationship between Diet Score and Depression using a t-test, as Diet Score was encoded numerically. Students who reported depression had a lower average diet score (1.77 vs 2.10), and this difference was highly significant (p < 2.2e-16). The regression model showed that each unit increase in diet score reduced the odds of depression by about 42%. This strong inverse relationship indicates that dietary habits may play a meaningful role in supporting mental health. Although diet is often overlooked in mental health discussions, our results reinforce that nutrition is a modifiable factor with potential mental health benefits.
+
+# **Study Hours**
+We used a t-test to examine the association between Study Hours and Depression. The results showed that depressed students study significantly more on average (7.81 hours vs 6.24 hours), with a p-value < 2.2e-16. In the logistic regression model, each additional hour of study was associated with a 12% increase in the odds of depression. This finding may reflect academic overload, perfectionism, or pressure to achieve, all of which can contribute to mental strain. While time spent studying is often seen as a positive behavior, our results suggest that excessive study time might also signal underlying stress or burnout. 
+
+The next step of our research is to investigate whether machine learning models can accurately predict students at risk of depression based on our dataset.
+
+# **Machine Learning Model Building**
+
+Let us now test using other ML classification models like Logistic Regression, Random Forest Classifier, Decision Tree classifier, KNN Classifier. We are using a standard 70-30 train/test split for all the models.
+## *Logistic Regression*
+
+```{r}
+set.seed(123)
+split_index <- createDataPartition(student_depression_dataset$Depression, p = 0.7, list = FALSE)
+train <- student_depression_dataset[split_index, ]
+test  <- student_depression_dataset[-split_index, ]
+
+logit_model <- glm(Depression ~ ., data = train, family = "binomial")
+
+logit_probs <- predict(logit_model, newdata = test, type = "response")
+
+logit_predictions <- ifelse(logit_probs > 0.5, 1, 0)
+
+logit_conf_matrix <- confusionMatrix(as.factor(logit_predictions), test$Depression)
+
+print(logit_conf_matrix)
+cat("Logistic Regression Accuracy:", logit_conf_matrix$overall['Accuracy'], "\n")
+
+```
+Logistic Regression achieved the highest accuracy among all models at 84.60%, with a balanced accuracy of 83.76%. It also had a strong Kappa score (0.68), indicating good agreement between predictions and actual outcomes. The model was further analyzed for statistically significant variables, with suicidal thoughts, academic pressure, and financial stress being the strongest predictors. Using p-values and a pseudo-R2 value from the pscl package, we found the model fit to be strong. Logistic regression also allowed for interpretability and further improvements by adding interaction terms, making it a reliable and explainable option for predicting student depression.
+
+## *Random Forest Classifier*
+
+```{r}
+
+rf_model <- randomForest(Depression ~ ., data = train, ntree = 100)
+
+rf_predictions <- predict(rf_model, newdata = test)
+
+rf_conf_matrix <- confusionMatrix(rf_predictions, test$Depression)
+
+print(rf_conf_matrix)
+cat("Random Forest Accuracy:", rf_conf_matrix$overall['Accuracy'], "\n")
+
+```
+The Random Forest classifier performed very well, with an accuracy of 84.16% and balanced accuracy of 83.32%. It showed high specificity (88.22%) and good sensitivity (78.41%), suggesting that it handled both depressed and non-depressed cases relatively well. However, it slightly underperformed compared to logistic regression. While it lacks interpretability, Random Forest can handle non-linear relationships and variable interactions automatically, making it a powerful model when explanation is not the main priority.
+
+## *Decision tree*
+
+```{r}
+dt_model <- rpart(Depression ~ ., data = train, method = "class")
+
+dt_predictions <- predict(dt_model, newdata = test, type = "class")
+
+dt_conf_matrix <- confusionMatrix(dt_predictions, test$Depression)
+
+print(dt_conf_matrix)
+cat("Decision Tree Accuracy:", dt_conf_matrix$overall['Accuracy'], "\n")
+
+```
+The Decision Tree model gave an accuracy of 82.44%, with balanced accuracy of 80.97% and a Kappa of 0.63. It was the simplest model in terms of structure and visualization but had slightly lower sensitivity compared to the other models. While easy to interpret, it was prone to underfitting and lacked the flexibility of ensemble methods like Random Forest. Overall, it performed decently but did not outperform the other models in any specific metric.
+
+## *KNN Classifier*
+
+```{r}
+numeric_vars <- sapply(train, is.numeric)
+
+train_numeric <- train[, numeric_vars]
+test_numeric  <- test[, numeric_vars]
+
+train_scaled_numeric <- as.data.frame(scale(train_numeric))
+test_scaled_numeric  <- as.data.frame(scale(test_numeric))
+
+train_scaled <- train_scaled_numeric
+train_scaled$Depression <- train$Depression
+
+test_scaled <- test_scaled_numeric
+test_scaled$Depression <- test$Depression
+
+set.seed(123)
+knn_predictions <- knn(
+  train = train_scaled[, -which(names(train_scaled) == "Depression")],
+  test  = test_scaled[, -which(names(test_scaled) == "Depression")],
+  cl    = train_scaled$Depression,
+  k     = 5
+)
+
+knn_conf_matrix <- confusionMatrix(knn_predictions, test_scaled$Depression)
+
+print(knn_conf_matrix)
+cat("KNN Accuracy:", knn_conf_matrix$overall['Accuracy'], "\n")
+
+
+```
+
+KNN achieved an accuracy of 82.54%, very close to the Decision Tree. It had a good balance between sensitivity (75.89%) and specificity (87.24%), and a Kappa of 0.637. However, it required data normalization and was slower due to its instance-based nature. While KNN is simple and non-parametric, its performance did not surpass logistic regression or Random Forest, and it offers no feature interpretability. It’s a solid baseline, but not the best performer for this task.
+
+
+## *Feature Importance*
+
+Let's see the feature importance of logistic regression model by calculating the coefficient values since it has the highest accuracy.
+
+```{r}
+logit_importance <- summary(logit_model)$coefficients
+logit_df <- as.data.frame(logit_importance)
+logit_df$Variable <- rownames(logit_df)
+
+logit_df <- logit_df[logit_df$Variable != "(Intercept)", ]
+logit_df$AbsEffect <- abs(logit_df$Estimate)
+logit_df <- logit_df[order(-logit_df$AbsEffect), ]
+
+logit_plot_df <- logit_df
+
+ggplot(logit_plot_df, aes(x = reorder(Variable, Estimate), y = Estimate, fill = Estimate > 0)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "Feature Importance from Logistic Regression",
+    x = "Feature",
+    y = "Coefficient Estimate"
+  ) +
+  theme_minimal() +
+  scale_fill_manual(values = c("steelblue", "tomato"))
+
+
+```
+After training the logistic regression model, we analyzed the feature importance by examining the magnitude and direction of the model’s coefficients. A higher absolute coefficient indicates a stronger influence on the prediction outcome. We visualized this using a bar plot, where positive coefficients represent features that increase the likelihood of depression, and negative coefficients reduce it. The most influential features included Suicidal Thoughts, Academic Pressure, Financial Stress, and Diet Score, which aligned well with existing mental health research. This approach provided valuable insights into the relative importance of each predictor, while also maintaining the interpretability that makes logistic regression especially useful in sensitive domains like mental health.
+
+## *Modeling with Interaction Terms*
+
+```{r}
+
+car::vif(log_model)
+#VIFs show no multicollinearity issues, VIF values are well below the common threshold of 5.
+cat("Logistic Regression model AIC - ", AIC(log_model))
+
+log_model_interaction <- glm(
+  Depression ~ . + Academic.Pressure:Financial.Stress,
+  data = student_depression_dataset, 
+  family = "binomial"
+)
+summary(log_model_interaction)
+cat("AIC of Logistic Regression model with interaction Academic.Pressure * Financial.Stress  - ", AIC(log_model_interaction))
+
+
+
+log_model_interaction2 <- glm(
+  Depression ~ . + Sleep.Hours:Study.Hours,
+  data = student_depression_dataset, 
+  family = "binomial"
+)
+summary(log_model_interaction2)
+cat("AIC of Logistic Regression model with interaction Sleep.Hours × Study.Hours  - ", AIC(log_model_interaction2))
+
+
+
+log_model_interaction3 <- glm(
+  Depression ~ . + Diet.Score:Financial.Stress,
+  data = student_depression_dataset, 
+  family = "binomial"
+)
+summary(log_model_interaction3)
+cat("AIC of Logistic Regression model with interaction Diet.Score × Financial.Stress - ", AIC(log_model_interaction3))
+
+
+
+log_model_interaction4 <- glm(
+  Depression ~ . + Family.History.of.Mental.Illness:Have.you.ever.had.suicidal.thoughts..,
+  data = student_depression_dataset, 
+  family = "binomial"
+)
+summary(log_model_interaction4)
+cat("AIC of Logistic Regression model with interaction Family.History × Suicidal.Thoughts - ", AIC(log_model_interaction4))
+
+
+
+combined_model <- glm(
+  Depression ~ . + Diet.Score:Financial.Stress + Family.History.of.Mental.Illness:Have.you.ever.had.suicidal.thoughts..,
+  data = student_depression_dataset,
+  family = "binomial"
+)
+summary(combined_model)
+cat("AIC of Logistic Regression model with combined interactions Diet.Score * Financial.Stress AIC & Family.History.of.Mental.Illness * Have.you.ever.had.suicidal.thoughts - ", AIC(combined_model))
+
+
+
+combined_model2 <- glm(
+  Depression ~ . + Academic.Pressure:Financial.Stress + Family.History.of.Mental.Illness:Have.you.ever.had.suicidal.thoughts..,
+  data = student_depression_dataset,
+  family = "binomial"
+)
+summary(combined_model2)
+cat("AIC of Logistic Regression model with combined interactions Academic.Pressure*Financial.Stress + Family.History.of.Mental.Illness*Have.you.ever.had.suicidal.thoughts - ", AIC(combined_model2) )
+
+
+
+combined_model3 <- glm(
+  Depression ~ . + Academic.Pressure:Financial.Stress + Diet.Score:Financial.Stress,
+  data = student_depression_dataset,
+  family = "binomial"
+)
+summary(combined_model3)
+cat("AIC of Logistic Regression model with combined interactions Academic.Pressure*Financial.Stress + Diet.Score*Financial.Stress - ", AIC(combined_model3) )
+
+```
+
+
+
+After evaluating multiple logistic regression models with interaction terms, the model incorporating the interaction between Diet.Score and Financial.Stress (AIC = 19539) stands out as the best choice. This model demonstrates superior performance in terms of statistical fit and practical relevance compared to alternatives.
+The base model without any interactions has an AIC of 19543, while the Diet.Score × Financial.Stress interaction model reduces this to 19539 which is a meaningful improvement as ΔAIC reduces by -4. In contrast, other interactions either fail to lower the AIC (e.g., Academic.Pressure × Financial.Stress retains AIC = 19543) or offer only marginal gains (e.g., Sleep.Hours × Study.Hours reduces AIC by just 1). The combined models (e.g., Diet.Score × Financial.Stress + Family.History × Suicidal.Thoughts) yield no additional benefit as its AIC is 19541, confirming that simplicity is preferable.
+The Diet.Score × Financial.Stress interaction is statistically significant having p equal to 0.033, indicating it meaningfully contributes to predicting depression. This aligns with established research linking financial stress and poor diet to mental health deterioration.
+Also,When we combine multiple interactions like Diet.Score × Financial.Stress + Family.History × Suicidal.Thoughts . It introduces unnecessary complexity without improving fit as its AIC is 19541 which is greater than 19539 AIC for Diet.Score × Financial.Stress interaction.
+
+
+### *Conclusion*
+
+Our research sheds light on some of the key factors that contribute to depression among university students. Through a combination of statistical testing and regression modeling, we identified strong relationships between depression and variables such as academic pressure, financial stress, sleep, diet, and study satisfaction. Some of these findings aligned with our expectations, like the strong association between suicidal thoughts and depression. Others were less intuitive. For example, students with higher GPAs were slightly more likely to report depression, which challenges the common assumption that strong academic performance always reflects emotional well-being.
+
+At GW, several programs are already in place to support student wellness. The Store, GW's campus food pantry, plays an important role in addressing food insecurity, which we found to be closely linked to mental health through our analysis of diet quality. Academic support programs aimed at underperforming students are also crucial. However, our results suggest the need to expand that outreach to include high-achieving students as well. Just because someone is doing well academically doesn’t mean they aren’t struggling mentally. Proactively checking in with students across the performance spectrum could help identify issues early, especially for those who may be dealing with burnout or perfectionism behind the scenes.
+
+Moving forward, universities like GW can use insights from this kind of research to shape more targeted, preventative mental health strategies. Increasing access to financial counseling, encouraging healthy sleep and eating habits, and fostering environments that reduce academic pressure without lowering standards are just a few examples. Most importantly, recognizing that depression is influenced by a wide range of everyday stressors can help shift support systems from reactive to proactive. We hope our work contributes to that ongoing effort and helps make mental health a more visible and integrated part of campus life.
+
+  
+### *Sources*
+
+U.S. News. Mental Health on College Campuses: Challenges and Solutions. 6 June 2024. https://www.usnews.com/news/education-news/articles/mental-health-on-college-campuses-challenges-and-solutions#google_vignette. 
+
+Inside Higher Ed. College Students Mental Health Takes a Turn for the Better. 11 September 2024. https://www.insidehighered.com/news/students/physical-mental-health/2024/09/11/college-students-are-less-depressed-more-mentally?utm_source=chatgpt.com.
