@@ -1,5 +1,5 @@
 ---
-title: "STUDENT DEPRESSION DATASET ANALYSIS"
+title: "STUDENT DEPRESSION ANALYSIS"
 author: "Data Pandas"
 date: "`r Sys.Date()`"
 output: 
@@ -304,9 +304,11 @@ Produced by Team Data Pandas (Meghan Casey, Raye Hazel Oji, Siddardha Priyatham 
   
 We delve into these variables in more detail in our data processing and exploratory data analysis sections. 
 
-<h2> Loading the Dataset </h2> 
 
-```{r include=T}
+
+Loading the Dataset 
+
+```{r, echo=TRUE, results='hide', , message=FALSE}
 student_depression_dataset <- read.csv("student_depression_dataset.csv")
 library(ezids)
 library(ggplot2)
@@ -352,6 +354,7 @@ student_depression_dataset$Study.Hours <- student_depression_dataset$Work.Study.
 student_depression_dataset$Work.Study.Hours<- NULL
 ```
 
+
 Check for duplicates and missing values
 
 ```{r}
@@ -369,6 +372,7 @@ missing_values <- colSums(is.na(student_depression_dataset))
 missing_values
 ```
 
+
 We also need to convert some variables into the proper type.
 
 Let's see the unique values in every column so that we can change their type accordingly
@@ -379,6 +383,7 @@ for (col in names(student_depression_dataset)) {
   print(unique(student_depression_dataset[[col]]))
 }
 ```
+
 
 First' We will convert the Degree to years of education and make the Sleep Duration a numerical variable.
 
@@ -412,6 +417,7 @@ student_depression_dataset$Sleep.Duration <- NULL
 
 
 ```
+
 
 Now, there are some ordinal variables like dietary habits into numerical with increasing levels.
 
@@ -453,7 +459,8 @@ ezids::xkablesummary(student_depression_dataset)
 ```
 
  
-</h1> EDA </h1> 
+<h1> EDA </h1> 
+
 
 <h2> Distribution by Depression variable </h2> 
 
@@ -466,6 +473,7 @@ ggplot(student_depression_dataset, aes(x = Depression)) +
 
 ```
 
+
 This bar chart shows the overall count of students with and without depression. It helps understand the class distribution, highlighting any class imbalance.
 
 <h2> Depression Distribution by Gender </h2> 
@@ -477,6 +485,7 @@ ggplot(student_depression_dataset, aes(x = Gender, fill = Depression)) +
   theme_minimal()
 
 ```
+
 
 This stacked proportion bar plot compares depression rates between genders. It allows us to observe whether one gender shows relatively higher depression levels. In our case, there is no much difference.
 
@@ -497,6 +506,7 @@ student_depression_dataset %>%
 
 ```
 
+
 Histograms of all key numerical features in the dataset like Academic Pressure, Age, CGPA, Diet SCore, Education Years, Financial stresss, Sleep Hours and Study hours.
 
 Thease histograms helps us detect any skewness or outliers in the dataset.
@@ -515,6 +525,7 @@ student_depression_dataset %>%
   theme_minimal()
 
 ```
+
 
 This is a Proportional bar plot of depression cases across different sleep durations. this let's us know whether there is any relation between the Sleep hours and the target variable deporession. 
 
@@ -537,6 +548,7 @@ for (v in vars) {
 }
 ```
 
+
 These boxplots shows us the Depression proportions for different numerical variables like Age, Sleep Hours, Study Hours, CGPA.
 
 <h2> Stacked Bar Plots: Categorical Scores vs Depression </h2> 
@@ -555,6 +567,8 @@ ggplot(student_depression_dataset, aes(x = factor(Financial.Stress), fill = Depr
   theme_minimal()
 
 ```
+
+
 These stacked plots tells us about the Depression proportions across the different CAtegorical variables like the Academic Pressure and the Financial Stress.
 
 The plots clearly tells us that the more the score of Academic/ Financial pressure, The more the Depression.
@@ -578,6 +592,7 @@ corrplot(cor_matrix, method = "color", type = "lower",
          title = "Correlation Heatmap", mar = c(0,0,1,0))
 
 ``` 
+
 
 There is no significant correlation between the variables. The Age and the Education years have a correlation on 0.59 which is very significant b ut is not required for our analysis.
 
@@ -628,6 +643,7 @@ summary(log_model)
 exp(coef(log_model))
 
 ```
+
 
 
 To facilitate our audience's understanding of our variables and their resulting recommendations, we have divided the variables into three main categories: 
@@ -688,6 +704,7 @@ The next step of our research is to investigate whether machine learning models 
 
 <h1> Machine Learning Model Building </h1> 
 
+
 Let us now test using other ML classification models like Logistic Regression, Random Forest Classifier, Decision Tree classifier, KNN Classifier. We are using a standard 70-30 train/test split for all the models.
 <h2> Logistic Regression </h2> 
 
@@ -709,6 +726,8 @@ print(logit_conf_matrix)
 cat("Logistic Regression Accuracy:", logit_conf_matrix$overall['Accuracy'], "\n")
 
 ```
+
+
 Logistic Regression achieved the highest accuracy among all models at 84.60%, with a balanced accuracy of 83.76%. It also had a strong Kappa score (0.68), indicating good agreement between predictions and actual outcomes. The model was further analyzed for statistically significant variables, with suicidal thoughts, academic pressure, and financial stress being the strongest predictors. Using p-values and a pseudo-R2 value from the pscl package, we found the model fit to be strong. Logistic regression also allowed for interpretability and further improvements by adding interaction terms, making it a reliable and explainable option for predicting student depression.
 
 
@@ -726,6 +745,8 @@ print(rf_conf_matrix)
 cat("Random Forest Accuracy:", rf_conf_matrix$overall['Accuracy'], "\n")
 
 ```
+
+
 The Random Forest classifier performed very well, with an accuracy of 84.16% and balanced accuracy of 83.32%. It showed high specificity (88.22%) and good sensitivity (78.41%), suggesting that it handled both depressed and non-depressed cases relatively well. However, it slightly underperformed compared to logistic regression. While it lacks interpretability, Random Forest can handle non-linear relationships and variable interactions automatically, making it a powerful model when explanation is not the main priority.
 
 <h2> Decision tree </h2> 
@@ -741,6 +762,8 @@ print(dt_conf_matrix)
 cat("Decision Tree Accuracy:", dt_conf_matrix$overall['Accuracy'], "\n")
 
 ```
+
+
 The Decision Tree model gave an accuracy of 82.44%, with balanced accuracy of 80.97% and a Kappa of 0.63. It was the simplest model in terms of structure and visualization but had slightly lower sensitivity compared to the other models. While easy to interpret, it was prone to underfitting and lacked the flexibility of ensemble methods like Random Forest. Overall, it performed decently but did not outperform the other models in any specific metric.
 
 <h2> KNN Classifier </h2> 
@@ -776,6 +799,7 @@ cat("KNN Accuracy:", knn_conf_matrix$overall['Accuracy'], "\n")
 
 ```
 
+
 KNN achieved an accuracy of 82.54%, very close to the Decision Tree. It had a good balance between sensitivity (75.89%) and specificity (87.24%), and a Kappa of 0.637. However, it required data normalization and was slower due to its instance-based nature. While KNN is simple and non-parametric, its performance did not surpass logistic regression or Random Forest, and it offers no feature interpretability. It’s a solid baseline, but not the best performer for this task.
 
 
@@ -807,6 +831,8 @@ ggplot(logit_plot_df, aes(x = reorder(Variable, Estimate), y = Estimate, fill = 
 
 
 ```
+
+
 After training the logistic regression model, we analyzed the feature importance by examining the magnitude and direction of the model’s coefficients. A higher absolute coefficient indicates a stronger influence on the prediction outcome. We visualized this using a bar plot, where positive coefficients represent features that increase the likelihood of depression, and negative coefficients reduce it. The most influential features included Suicidal Thoughts, Academic Pressure, Financial Stress, and Diet Score, which aligned well with existing mental health research. This approach provided valuable insights into the relative importance of each predictor, while also maintaining the interpretability that makes logistic regression especially useful in sensitive domains like mental health.
 
 <h2> Modeling with Interaction Terms </h2> 
