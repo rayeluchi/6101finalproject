@@ -674,7 +674,7 @@ Under this category we have: Age, CGPA, Family History of Mental Illness, and Su
 
   We analyzed the relationship between suicidal thoughts and depression using a chi-square test, since both variables were binary factor variables. The test produced an extremely strong result (χ2=8323.9, p<2.2×10−16), confirming a very strong association between the two variables. In our logistic regression model, having suicidal thoughts was by far the most powerful predictor of depression, increasing the odds by more than 12 times. While this connection may seem obvious, it is still important to formally investigate and quantify it. Doing so reinforces the critical need for early intervention when suicidal ideation is reported. Additionally, suicidal thoughts can manifest in many different ways beyond just direct ideation, including passive thoughts about death, self-isolation, or feelings of hopelessness. By treating this relationship as a key data point rather than an assumption, we emphasize the importance of recognizing and addressing these broader warning signs within student populations. 
 
-<h2> Stress and Satisfaction </h2> 
+<h1> Stress and Satisfaction </h1> 
 
 Under this category we have: Financial Stress, Academic Pressure, and Study Satisfaction. 
 
